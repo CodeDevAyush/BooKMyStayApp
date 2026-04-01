@@ -1,7 +1,6 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-// Room domain classes
+// -------------------- Room Domain --------------------
 abstract class Room {
     protected String roomType;
     protected int beds;
@@ -42,9 +41,31 @@ class SuiteRoom extends Room {
     }
 }
 
-// Centralized inventory
-class RoomInventory {
+// -------------------- Reservation --------------------
+class Reservation {
+    private String guestName;
+    private String roomType;
 
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public void displayReservation() {
+        System.out.println("Guest: " + guestName + " | Room: " + roomType);
+    }
+}
+
+// -------------------- Inventory --------------------
+class RoomInventory {
     private HashMap<String, Integer> inventory;
 
     public RoomInventory() {
@@ -62,30 +83,52 @@ class RoomInventory {
         inventory.put(roomType, count);
     }
 
-    public Map<String, Integer> getAllInventory() {
-        return new HashMap<>(inventory); // defensive copy
+    public void displayInventory() {
+        System.out.println("===== Inventory =====");
+        for (Map.Entry<String, Integer> entry : inventory.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue());
+        }
+        System.out.println();
     }
 }
 
-// Search service
-class SearchService {
+// -------------------- Queue --------------------
+class BookingRequestQueue {
+    private Queue<Reservation> requestQueue;
 
+    public BookingRequestQueue() {
+        requestQueue = new LinkedList<>();
+    }
+
+    public void addRequest(Reservation reservation) {
+        requestQueue.add(reservation);
+        System.out.println("Added booking for " + reservation.getGuestName());
+    }
+
+    public void displayQueue() {
+        System.out.println("\n===== Booking Queue =====");
+        if (requestQueue.isEmpty()) {
+            System.out.println("No requests.");
+        } else {
+            for (Reservation r : requestQueue) {
+                r.displayReservation();
+            }
+        }
+    }
+
+    public Reservation processNextRequest() {
+        return requestQueue.poll();
+    }
+}
+
+// -------------------- Search Service --------------------
+class SearchService {
     private RoomInventory inventory;
 
     public SearchService(RoomInventory inventory) {
         this.inventory = inventory;
     }
 
-    // Display full inventory
-    public void displayInventory() {
-        System.out.println("===== Current Room Inventory =====");
-        for (Map.Entry<String, Integer> entry : inventory.getAllInventory().entrySet()) {
-            System.out.println(entry.getKey() + " : " + entry.getValue() + " rooms available");
-        }
-        System.out.println();
-    }
-
-    // Display only available rooms
     public void displayAvailableRooms(Room[] rooms) {
         System.out.println("===== Available Rooms =====\n");
 
@@ -99,35 +142,34 @@ class SearchService {
     }
 }
 
-// Main class
+// -------------------- Main --------------------
 public class Main {
-
     public static void main(String[] args) {
 
-        // Initialize inventory
         RoomInventory inventory = new RoomInventory();
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        SearchService searchService = new SearchService(inventory);
 
-        // Initialize rooms
         Room[] rooms = {
                 new SingleRoom(),
                 new DoubleRoom(),
                 new SuiteRoom()
         };
 
-        // Search service
-        SearchService searchService = new SearchService(inventory);
-
-        // Display inventory
-        searchService.displayInventory();
-
-        // Update example
-        System.out.println("Updating availability for Single Room...\n");
-        inventory.updateAvailability("Single Room", 4);
-
-        // Display available rooms
+        // Show rooms
         searchService.displayAvailableRooms(rooms);
 
-        // Display updated inventory
-        searchService.displayInventory();
+        // Create reservations
+        Reservation r1 = new Reservation("Alice", "Single Room");
+        Reservation r2 = new Reservation("Bob", "Double Room");
+        Reservation r3 = new Reservation("Charlie", "Suite Room");
+
+        // Add to queue
+        bookingQueue.addRequest(r1);
+        bookingQueue.addRequest(r2);
+        bookingQueue.addRequest(r3);
+
+        // Display queue
+        bookingQueue.displayQueue();
     }
 }
